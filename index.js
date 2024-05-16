@@ -1,6 +1,8 @@
 import venom from 'venom-bot';
 import express from 'express';
 import fs from 'fs';
+import weatherHandler from './components/weather.js'
+import statusHandler from './components/status.js'
 
 const app = express();
 app.use(express.json());
@@ -29,6 +31,10 @@ async function createBot() {
       folderNameToken: 'tokens',
       mkdirFolderToken: SESSION_PATH
     });
+
+    // הוספת השהייה של 5 שניות
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     start(client);
   } catch (error) {
     console.error('Error creating bot:', error);
@@ -40,11 +46,16 @@ createBot();
 function start(client) {
   client.onMessage(async (message) => {
     try {
-      if (message.body.trim().toUpperCase() === 'HI'){
-        await client.sendText(message.from, 'HIIIIIIIII');
+      const text = message.body.trim().toLowerCase();
+      if (text === 'מזג האוויר') {
+        await weatherHandler(client, message);
+      } else if (text === 'מה קורה') {
+        await statusHandler(client, message);
+      } else {
+        await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error handling message:', error);
     }
   });
 
