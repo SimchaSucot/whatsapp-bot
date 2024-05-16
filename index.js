@@ -1,8 +1,8 @@
 import venom from 'venom-bot';
 import express from 'express';
 import fs from 'fs';
-import weatherHandler from './components/weather.js'
-import statusHandler from './components/status.js'
+import weatherHandler from './components/weather.js';
+import statusHandler from './components/status.js';
 
 const app = express();
 app.use(express.json());
@@ -18,7 +18,7 @@ async function createBot() {
     const client = await venom.create({
       session: 'whatsapp-bot',
       multidevice: true,
-      headless: 'new', // עדכון שימוש ב-headless mode החדש
+      headless: true, // שימוש ב-headless mode רגיל
       browserArgs: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -47,12 +47,16 @@ function start(client) {
   client.onMessage(async (message) => {
     try {
       const text = message.body.trim().toLowerCase();
+      const from = message.from; // המספר ששלח את ההודעה
+      const name = message.notifyName || message.pushname || 'חבר ללא שם'; // שם המשתמש אם קיים
+      console.log(text);
+      console.log(from, " : ", name);
       if (text === 'מזג האוויר') {
         await weatherHandler(client, message);
       } else if (text === 'מה קורה') {
         await statusHandler(client, message);
-      } else {
-        await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
+      // } else {
+      //   await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
       }
     } catch (error) {
       console.error('Error handling message:', error);
