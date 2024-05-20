@@ -4,7 +4,7 @@ import fs from "fs";
 import weatherHandler from "./components/weather.js";
 import statusHandler from "./components/status.js";
 import profilePictureHandler from './components/profilePictureHandler.js';
-
+import youtubeHandler from './components/youtubeHandler.js';
 
 const app = express();
 app.use(express.json());
@@ -20,7 +20,7 @@ async function createBot() {
     const client = await venom.create({
       session: "whatsapp-bot",
       multidevice: true,
-      headless: true, // שימוש ב-headless mode רגיל
+      headless: true,
       browserArgs: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -34,7 +34,6 @@ async function createBot() {
       mkdirFolderToken: SESSION_PATH,
     });
 
-    // הוספת השהייה של 5 שניות
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
     start(client);
@@ -49,22 +48,28 @@ function start(client) {
   client.onMessage(async (message) => {
     try {
       const text = message.body.trim().toLowerCase();
-      const from = message.from; // המספר ששלח את ההודעה
+      const from = message.from;
       const type = message.type;
+
+      console.log("Message received:", message);
+
       if (message.type === "location") {
-        console.log(message.lat,message.lng);
-      }else{
-        const name = message.notifyName || message.pushname || "חבר ללא שם"; // שם המשתמש אם קיים
+        console.log(message.lat, message.lng);
+        await weatherHandler(client, message);
+      } else if (text.startsWith('http') && (text.includes('youtube.com') || text.includes('youtu.be'))) {
+        await youtubeHandler(client, message);
+      } else {
+        const name = message.notifyName || message.pushname || "חבר ללא שם";
         console.log(text);
-        console.log(from, " : ", name, "{", type, "}");
+        console.log(from, ":", name, "{", type, "}");
         if (text === "מזג האוויר") {
           await weatherHandler(client, message);
         } else if (text === "מה קורה") {
           await statusHandler(client, message);
-        } else if (text === "תמונת פרופיל"){
-          await profilePictureHandler(client, message)
-          // } else {
-          //   await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
+        } else if (text === "תמונת פרופיל") {
+          await profilePictureHandler(client, message);
+        // } else {
+        //   await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
         }
       }
     } catch (error) {
