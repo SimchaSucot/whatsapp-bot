@@ -36,7 +36,10 @@ async function createBot() {
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
+    await client.page.waitForFunction('window.WAPI !== undefined');
+
     start(client);
+    console.log("The chat is connected");
   } catch (error) {
     console.error("Error creating bot:", error);
   }
@@ -45,32 +48,38 @@ async function createBot() {
 createBot();
 
 function start(client) {
+  // client.sendText('status@broadcast', 'חיבור חדש!!!');
   client.onMessage(async (message) => {
     try {
-      const text = message.body.trim().toLowerCase();
-      const from = message.from;
-      const type = message.type;
+      // בדיקה אם message מוגדר כראוי
+      if (message && message.body && typeof message.body.trim === 'function') {
+        const text = message.body.trim().toLowerCase();
+        const from = message.from;
+        const type = message.type;
 
-      console.log("Message received:", message);
+        console.log("Message received:", message);
 
-      if (message.type === "location") {
-        console.log(message.lat, message.lng);
-        await weatherHandler(client, message);
-      } else if (text.startsWith('http') && (text.includes('youtube.com') || text.includes('youtu.be'))) {
-        await youtubeHandler(client, message);
-      } else {
-        const name = message.notifyName || message.pushname || "חבר ללא שם";
-        console.log(text);
-        console.log(from, ":", name, "{", type, "}");
-        if (text === "מזג האוויר") {
+        if (message.type === "location") {
+          console.log(message.lat, message.lng);
           await weatherHandler(client, message);
-        } else if (text === "מה קורה") {
-          await statusHandler(client, message);
-        } else if (text === "תמונת פרופיל") {
-          await profilePictureHandler(client, message);
-        // } else {
-        //   await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
+        } else if (text.startsWith('http') && (text.includes('youtube.com') || text.includes('youtu.be'))) {
+          await youtubeHandler(client, message);
+        } else {
+          const name = message.notifyName || message.pushname || "חבר ללא שם";
+          console.log(text);
+          console.log(from, ":", name, "{", type, "}");
+          if (text === "מזג האוויר") {
+            await weatherHandler(client, message);
+          } else if (text === "מה קורה") {
+            await statusHandler(client, message);
+          } else if (text === "תמונת פרופיל") {
+            await profilePictureHandler(client, message);
+          // } else {
+          //   await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
+          }
         }
+      } else {
+        console.error('Error: message is undefined or not a string.');
       }
     } catch (error) {
       console.error("Error handling message:", error);
