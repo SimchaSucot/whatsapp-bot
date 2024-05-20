@@ -3,6 +3,7 @@ import ytdl from 'ytdl-core';
 import fs from 'fs';
 
 async function youtubeHandler(client, message) {
+  await client.sendText(message.from,"עוד כמה שניות וזה מוכן!")
   const url = message.body;
   const videoId = ytdl.getURLVideoID(url);
   const info = await ytdl.getInfo(videoId);
