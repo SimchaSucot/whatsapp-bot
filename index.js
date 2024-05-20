@@ -56,6 +56,7 @@ function start(client) {
         const text = message.body.trim().toLowerCase();
         const from = message.from;
         const type = message.type;
+        await client.startTyping(from)
 
         console.log("Message received:", message);
 

@@ -16,6 +16,7 @@
     "express": "^4.19.2",
     "puppeteer": "^22.9.0",
     "venom-bot": "^5.1.0",
+    "whatsapp-web.js": "^1.23.0",
     "ytdl-core": "^4.11.5"
   }
 }
