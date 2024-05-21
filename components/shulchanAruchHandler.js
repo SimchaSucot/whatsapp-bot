@@ -1,5 +1,11 @@
 import axios from 'axios';
-import cheerio from 'cheerio';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 let userState = {}; // לשמור את מצב המשתמשים
 
@@ -69,22 +75,46 @@ async function shulchanAruchHandler(client, message, userState) {
         const simanNumber = hebrewToNumber(siman);
         const saifNumber = hebrewToNumber(saif);
         const response = await axios.get(`https://www.sefaria.org/api/texts/Shulchan_Arukh,_${englishPart}.${simanNumber}?lang=he`);
-        
-        // שימוש ב-cheerio כדי לשלוף את הטקסט הנקי מהתגובה של ה-API
-        const $ = cheerio.load(response.data.he);
-        let saifText = '';
-        $('br').each((i, elem) => {
-          if (i === saifNumber - 1) {
-            saifText = $(elem).next().text().trim();
-            return false; // עוצר את הלולאה לאחר שמצאנו את הסעיף
-          }
-        });
 
-        if (!saifText) {
+        // נניח שהשדה response.data.he הוא מערך
+        const saifim = response.data.he;
+        let saifText = '';
+        if (Array.isArray(saifim) && saifNumber <= saifim.length) {
+          saifText = saifim[saifNumber - 1]; // שמירת הטקסט כמות שהוא
+        } else {
           saifText = 'לא נמצא סעיף מתאים.';
         }
 
-        await client.sendText(user, `*סעיף ${saif} בסימן ${siman} חלק ${part}:*\n${saifText}`);
+        // יצירת HTML מלא
+        const fullHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; direction: rtl; }
+              .content { padding: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="content">
+              <h1>סעיף ${saif} בסימן ${siman} חלק ${part}</h1>
+              <p>${saifText}</p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        // שמירת ה-HTML בקובץ
+        const filePath = path.join(__dirname, `saif_${user}.html`);
+        fs.writeFileSync(filePath, fullHtml, 'utf8');
+
+        // שליחת הקובץ למשתמש
+        await client.sendFile(message.from, filePath, `saif_${user}.html`, `סעיף ${saif} בסימן ${siman} חלק ${part}`);
+
+        // מחיקת הקובץ המקומי לאחר שליחתו
+        fs.unlinkSync(filePath);
+
         delete userState[user]; // איפוס מצב המשתמש
         break;
 
