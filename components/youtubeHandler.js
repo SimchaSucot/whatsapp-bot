@@ -12,7 +12,7 @@ async function youtubeHandler(client, message) {
 
     // הגבלת גודל הווידאו, ניתן לשנות את הערך לפי הצורך
     const videoSize = parseInt(videoFormat.contentLength, 10);
-    const maxVideoSize = 70 * 1024 * 1024; // למשל 100MB
+    const maxVideoSize = 70 * 1024 * 1024; // למשל 70MB
     if (videoSize > maxVideoSize) {
       await client.sendText(message.from, `הסרטון גדול מדי. אנא נסה סרטון קצר יותר. (${(videoSize / 1048576).toFixed(1)}MB)`);
       return;
@@ -33,7 +33,7 @@ async function youtubeHandler(client, message) {
 
       const timeout = setTimeout(async () => {
         await client.sendText(message.from, 'לוקח קצת יותר זמן מכיון שהסרטון כבד או שאין קליטה טובה מספיק');
-      }, 15000); // 15 שניות
+      }, 1000); // 10 שניות
 
       videoStream.pipe(writeStream);
 

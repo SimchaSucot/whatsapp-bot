@@ -5,6 +5,7 @@ import weatherHandler from "./components/weather.js";
 import statusHandler from "./components/status.js";
 import profilePictureHandler from './components/profilePictureHandler.js';
 import youtubeHandler from './components/youtubeHandler.js';
+import shulchanAruchHandler from "./components/shulchanAruchHandler.js";
 
 const app = express();
 app.use(express.json());
@@ -14,6 +15,8 @@ const SESSION_PATH = "./whatsapp-session/tokens";
 if (!fs.existsSync(SESSION_PATH)) {
   fs.mkdirSync(SESSION_PATH, { recursive: true });
 }
+
+let userState = {};
 
 async function createBot() {
   try {
@@ -75,6 +78,8 @@ function start(client) {
             await statusHandler(client, message);
           } else if (text === "תמונת פרופיל") {
             await profilePictureHandler(client, message);
+          } else if (text === "שולחן ערוך" || userState[from]) {
+            await shulchanAruchHandler(client, message ,userState);
           // } else {
           //   await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
           }
