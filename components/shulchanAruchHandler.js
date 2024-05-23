@@ -1,6 +1,7 @@
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import puppeteer from 'puppeteer';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -105,15 +106,24 @@ async function shulchanAruchHandler(client, message, userState) {
           </html>
         `;
 
-        // שמירת ה-HTML בקובץ
-        const filePath = path.join(__dirname, `saif_${user}.html`);
-        fs.writeFileSync(filePath, fullHtml, 'utf8');
+        // שמירת ה-HTML בקובץ זמני
+        const htmlFilePath = path.join(__dirname, `saif_${user}.html`);
+        fs.writeFileSync(htmlFilePath, fullHtml, 'utf8');
 
-        // שליחת הקובץ למשתמש
-        await client.sendFile(message.from, filePath, `saif_${user}.html`, `סעיף ${saif} בסימן ${siman} חלק ${part}`);
+        // יצירת תמונה מה-HTML באמצעות puppeteer
+        const imageFilePath = path.join(__dirname, `saif_${user}.png`);
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.goto(`file://${htmlFilePath}`, { waitUntil: 'networkidle0' });
+        await page.screenshot({ path: imageFilePath, fullPage: true });
+        await browser.close();
 
-        // מחיקת הקובץ המקומי לאחר שליחתו
-        fs.unlinkSync(filePath);
+        // שליחת קובץ התמונה למשתמש
+        await client.sendFile(message.from, imageFilePath, `saif_${user}.png`, `סעיף ${saif} בסימן ${siman} חלק ${part}`);
+
+        // מחיקת הקבצים המקומיים לאחר שליחתם
+        fs.unlinkSync(htmlFilePath);
+        fs.unlinkSync(imageFilePath);
 
         delete userState[user]; // איפוס מצב המשתמש
         break;
