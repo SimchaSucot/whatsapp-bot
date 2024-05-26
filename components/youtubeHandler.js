@@ -14,7 +14,7 @@ async function youtubeHandler(client, message) {
     const videoSize = parseInt(videoFormat.contentLength, 10);
     const maxVideoSize = 70 * 1024 * 1024; // למשל 70MB
     if (videoSize > maxVideoSize) {
-      await client.sendText(message.from, `הסרטון גדול מדי. אנא נסה סרטון קצר יותר. (${(videoSize / 1048576).toFixed(1)}MB)`);
+      await client.sendText(message.from, `הסרטון גדול מדי(${(videoSize / 1048576).toFixed(1)}MB). אנא נסה סרטון קצר יותר.`);
       return;
     }
 
@@ -33,7 +33,7 @@ async function youtubeHandler(client, message) {
 
       const timeout = setTimeout(async () => {
         await client.sendText(message.from, 'לוקח קצת יותר זמן מכיון שהסרטון כבד או שאין קליטה טובה מספיק');
-      }, 1000); // 10 שניות
+      }, 1300); // 13 שניות
 
       videoStream.pipe(writeStream);
 
@@ -41,7 +41,7 @@ async function youtubeHandler(client, message) {
         clearTimeout(timeout);
         try {
           console.log('Finished downloading the video');
-          await client.sendFile(message.from, path, `${videoId}.mp4`, 'וזה הסירטון!');
+          await client.sendFile(message.from, path, `${videoId}.mp4`, `וזה הסירטון (${(videoSize / 1048576).toFixed(1)}MB)`);
           console.log('Video sent successfully');
           fs.unlinkSync(path);
         } catch (sendError) {
