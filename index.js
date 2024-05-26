@@ -72,9 +72,9 @@ function start(client) {
           const name = message.notifyName || message.pushname || "חבר ללא שם";
           console.log(text);
           console.log(from, ":", name, "{", type, "}");
-          if (text === "מזג האוויר") {
+          if (text === "מזג האוויר" || text === "מזג אוויר" || text === "מה המזג האוויר?") {
             await weatherHandler(client, message);
-          } else if (text === "מה קורה") {
+          } else if (text === "מה קורה" || text === "מה נשמע" || text === "מה איתך") {
             await statusHandler(client, message);
           } else if (text === "תמונת פרופיל") {
             await profilePictureHandler(client, message);
