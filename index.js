@@ -1,6 +1,8 @@
 import venom from "venom-bot";
 import express from "express";
 import fs from "fs";
+import { fileURLToPath } from 'url';
+import path from 'path';
 import weatherHandler from "./components/weather.js";
 import statusHandler from "./components/status.js";
 import profilePictureHandler from './components/profilePictureHandler.js';
@@ -10,56 +12,100 @@ import shulchanAruchHandler from "./components/shulchanAruchHandler.js";
 const app = express();
 app.use(express.json());
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 const SESSION_PATH = "./whatsapp-session/tokens";
+const QR_CODE_PATH = './public/qr_code.png';
 
 if (!fs.existsSync(SESSION_PATH)) {
   fs.mkdirSync(SESSION_PATH, { recursive: true });
 }
 
 let userState = {};
+let botConnected = false;
 
 async function createBot() {
   try {
-    const client = await venom.create({
-      session: "whatsapp-bot",
-      multidevice: true,
-      headless: true,
-      browserArgs: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--disable-gpu",
-      ],
-      folderNameToken: "tokens",
-      mkdirFolderToken: SESSION_PATH,
-    });
+    if (fs.existsSync(SESSION_PATH)) {
+      fs.rmSync(SESSION_PATH, { recursive: true, force: true });
+    }
+
+    const client = await venom.create(
+      'whatsapp-bot',
+      (base64Qr, asciiQR) => {
+        console.log(asciiQR); // Optional to log the QR in the terminal
+
+        var matches = base64Qr.match(/^data:([A-Za-z-+/]+);base64,(.+)$/),
+          response = {};
+
+        if (matches.length !== 3) {
+          throw new Error('Invalid input string');
+        }
+
+        response.type = matches[1];
+        response.data = Buffer.from(matches[2], 'base64');
+
+        var imageBuffer = response;
+
+        if (!fs.existsSync('./public')) {
+          fs.mkdirSync('./public', { recursive: true });
+        }
+
+        fs.writeFileSync(QR_CODE_PATH, imageBuffer.data, 'binary', function (err) {
+          if (err != null) {
+            console.log(err);
+          }
+        });
+      },
+      undefined,
+      {
+        multidevice: true,
+        headless: true,
+        browserArgs: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-accelerated-2d-canvas",
+          "--no-first-run",
+          "--no-zygote",
+          "--disable-gpu",
+        ],
+        folderNameToken: "tokens",
+        mkdirFolderToken: SESSION_PATH,
+      }
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
     await client.page.waitForFunction('window.WAPI !== undefined');
 
+    botConnected = true;
+
+    // Delete QR code after connection
+    if (fs.existsSync(QR_CODE_PATH)) {
+      fs.unlinkSync(QR_CODE_PATH);
+    }
+
     start(client);
     console.log("The chat is connected");
   } catch (error) {
     console.error("Error creating bot:", error);
+    setTimeout(createBot, 5000); // Retry after 5 seconds
   }
 }
 
 createBot();
 
 function start(client) {
-  // client.sendText('status@broadcast', 'חיבור חדש!!!');
   client.onMessage(async (message) => {
     try {
-      // בדיקה אם message מוגדר כראוי
       if (message && message.body && typeof message.body.trim === 'function') {
         const text = message.body.trim().toLowerCase();
         const from = message.from;
         const type = message.type;
-        // await client.startTyping(from)
 
         console.log("Message received:", message);
 
@@ -80,8 +126,6 @@ function start(client) {
             await profilePictureHandler(client, message);
           } else if (text === "שולחן ערוך" || userState[from]) {
             await shulchanAruchHandler(client, message ,userState);
-          // } else {
-          //   await client.sendText(message.from, 'לא הבנתי את הבקשה שלך.');
           }
         }
       } else {
@@ -103,6 +147,17 @@ function start(client) {
     }
   });
 }
+
+app.get("/", (req, res) => {
+  if (botConnected) {
+    res.send("<p>The bot is currently connected.</p>");
+  } else {
+    res.send(`
+      <p>Please scan the QR code to connect:</p>
+      <img src="/qr_code.png" alt="QR Code">
+    `);
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

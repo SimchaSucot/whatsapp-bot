@@ -119,7 +119,7 @@ async function shulchanAruchHandler(client, message, userState) {
         await browser.close();
 
         // שליחת קובץ התמונה למשתמש
-        await client.sendFile(message.from, imageFilePath, `saif_${user}.png`, `סעיף ${saif} בסימן ${siman} חלק ${part}`);
+        await client.sendFile(message.from, imageFilePath, `saif_${user}.png`,`שו"ע חלק ${part} סימן ${siman} סעיף ${saif}`);
 
         // מחיקת הקבצים המקומיים לאחר שליחתם
         fs.unlinkSync(htmlFilePath);
