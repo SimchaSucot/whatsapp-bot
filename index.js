@@ -3,6 +3,7 @@ import express from "express";
 import fs from "fs";
 import { fileURLToPath } from 'url';
 import path from 'path';
+import puppeteer from 'puppeteer';
 import weatherHandler from "./components/weather.js";
 import statusHandler from "./components/status.js";
 import profilePictureHandler from './components/profilePictureHandler.js';
@@ -32,6 +33,17 @@ async function createBot() {
     if (fs.existsSync(SESSION_PATH)) {
       fs.rmSync(SESSION_PATH, { recursive: true, force: true });
     }
+
+    // Install Chrome if not available
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+      ],
+    });
+    const browserWSEndpoint = browser.wsEndpoint();
+    await browser.close();
 
     const client = await venom.create(
       'whatsapp-bot',
@@ -63,7 +75,7 @@ async function createBot() {
       undefined,
       {
         multidevice: true,
-        headless: true,
+        headless: 'new', // Use new headless mode
         browserArgs: [
           "--no-sandbox",
           "--disable-setuid-sandbox",
@@ -75,6 +87,9 @@ async function createBot() {
         ],
         folderNameToken: "tokens",
         mkdirFolderToken: SESSION_PATH,
+        puppeteerOptions: {
+          browserWSEndpoint: browserWSEndpoint, // Use the existing browser instance
+        },
       }
     );
 
