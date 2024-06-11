@@ -15,8 +15,7 @@
     "axios": "^1.6.8",
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.19.2",
-    "puppeteer": "^22.10.0",
-    "puppeteer-extra": "^3.3.6",
+    "puppeteer": "^22.9.0",
     "venom-bot": "^5.1.0",
     "whatsapp-web.js": "^1.23.0",
     "ytdl-core": "^4.11.5"
