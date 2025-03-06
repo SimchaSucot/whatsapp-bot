@@ -4,14 +4,21 @@ import fs from "fs";
 import { fileURLToPath } from 'url';
 import path from 'path';
 import puppeteer from 'puppeteer';
+import dotenv from 'dotenv';
 import weatherHandler from "./components/weather.js";
 import statusHandler from "./components/status.js";
 import profilePictureHandler from './components/profilePictureHandler.js';
 import youtubeHandler from './components/youtubeHandler.js';
 import shulchanAruchHandler from "./components/shulchanAruchHandler.js";
+import pizzaHandler from './components/pizzaHandler.js';
+import mishnayotSurveyHandler from './components/mishnayotSurveyHandler.js';
 
+
+dotenv.config();
 const app = express();
 app.use(express.json());
+console.log("Loaded API Key:", process.env.OPENAI_API_KEY);
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,13 +142,18 @@ function start(client) {
           console.log(from, ":", name, "{", type, "}");
           if (text === "מזג האוויר" || text === "מזג אוויר" || text === "מה המזג האוויר?") {
             await weatherHandler(client, message);
-          } else if (text === "מה קורה" || text === "מה נשמע" || text === "מה איתך") {
+        } else if (text === "מה קורה" || text === "מה נשמע" || text === "מה איתך") {
             await statusHandler(client, message);
-          } else if (text === "תמונת פרופיל") {
+        } else if (text === "תמונת פרופיל") {
             await profilePictureHandler(client, message);
-          } else if (text === "שולחן ערוך" || userState[from]) {
-            await shulchanAruchHandler(client, message ,userState);
-          }
+        } else if (text === "שולחן ערוך" || userState[from]) {
+            await shulchanAruchHandler(client, message, userState);
+        } else if (text.startsWith("פיצה")) {
+            await pizzaHandler(client, message);
+        } else if (text === "סקר משניות") {
+            await mishnayotSurveyHandler(client, message);
+        }
+        
         }
       } else {
         console.error('Error: message is undefined or not a string.');
