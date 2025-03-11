@@ -8,18 +8,17 @@ async function mishnayotSurveyHandler(client, message) {
         "טהרות": ["כלים", "אהלות", "נגעים", "פרה", "טהרות", "מקוואות", "נידה", "מכשירין", "זבים", "טבול יום", "ידים", "עוקצים"]
     };
 
-    let surveyText = "📖 *סקר משניות - איזו מסכת אתה רוצה ללמוד?*\n\n";
-
-    for (const [seder, masechtotList] of Object.entries(masechtot)) {
-        surveyText += `*✅ ${seder}*\n`;
-        masechtotList.forEach(masechet => {
-            surveyText += `▫️ ${masechet}\n`;
-        });
-        surveyText += "\n";
-    }
-
     try {
-        await client.sendText(message.from, surveyText);
+        for (const [seder, masechtotList] of Object.entries(masechtot)) {
+            let surveyText = `📖 *סקר משניות - סדר ${seder}*
+
+`;
+            masechtotList.forEach(masechet => {
+                surveyText += `▫️ ${masechet}\n`;
+            });
+            
+            await client.sendText(message.from, surveyText);
+        }
     } catch (error) {
         console.error("Error sending mishnayot survey:", error);
         await client.sendText(message.from, "❌ אירעה שגיאה בשליחת סקר המשניות. נסה שוב מאוחר יותר.");
